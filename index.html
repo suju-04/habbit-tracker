@@ -68,6 +68,45 @@ font-weight:bold;
 color:#06d6a0;
 }
 
+/* Circle */
+.circle-container{
+display:flex;
+flex-direction:column;
+align-items:center;
+margin-top:40px;
+}
+
+.circle{
+width:110px;
+height:110px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:20px;
+font-weight:bold;
+color:white;
+background:conic-gradient(#00d4ff 0%, #444 0%);
+margin-bottom:15px;
+}
+
+/* Reset button */
+.reset-btn{
+background:#ff4d4d;
+border:none;
+padding:8px 18px;
+border-radius:8px;
+color:white;
+font-weight:bold;
+cursor:pointer;
+transition:0.3s;
+}
+
+.reset-btn:hover{
+background:#ff1a1a;
+transform:scale(1.05);
+}
+
 .chart-container{
 margin-top:40px;
 background:#2a2a3d;
@@ -99,6 +138,15 @@ document.write("<th>"+i+"</th>")
 <canvas id="chart"></canvas>
 </div>
 
+<!-- Circle + Reset at bottom -->
+<div class="circle-container">
+  <div class="circle">
+    <span id="circleText">0%</span>
+  </div>
+
+  <button onclick="resetData()" class="reset-btn">Reset All</button>
+</div>
+
 <script>
 
 let habits=[
@@ -112,9 +160,7 @@ let habits=[
 "ScreenTime<4hr"
 ]
 
-// Load saved data
 let savedData = localStorage.getItem("habitData")
-
 let data = savedData ? JSON.parse(savedData) : habits.map(()=>Array(30).fill(0))
 
 let table=document.getElementById("habitTable")
@@ -135,7 +181,6 @@ let cell=document.createElement("td")
 let box=document.createElement("div")
 box.className="box"
 
-// Load saved UI state
 if(data[hIndex][d]===1){
 box.classList.add("done")
 }
@@ -146,7 +191,6 @@ box.classList.toggle("done")
 
 data[hIndex][d]=box.classList.contains("done")?1:0
 
-// Save data
 localStorage.setItem("habitData", JSON.stringify(data))
 
 updateChart()
@@ -168,7 +212,7 @@ table.appendChild(row)
 
 })
 
-// Graph
+// Chart
 const ctx=document.getElementById("chart")
 
 const chart=new Chart(ctx,{
@@ -182,17 +226,13 @@ borderColor:"#00d4ff",
 borderWidth:3,
 tension:0.4,
 fill:false,
-
 pointRadius:0,
 pointHoverRadius:0
-
 }]
 },
 options:{
 plugins:{
-legend:{
-labels:{color:"white"}
-}
+legend:{labels:{color:"white"}}
 },
 scales:{
 x:{
@@ -214,33 +254,61 @@ function updateChart(){
 let daily=[]
 
 for(let d=0;d<30;d++){
-
 let sum=0
-
 for(let h=0;h<habits.length;h++){
 sum+=data[h][d]
 }
-
 daily[d]=(sum/habits.length)*100
-
 }
 
 chart.data.datasets[0].data=daily
 chart.update()
 
 for(let h=0;h<habits.length;h++){
-
 let total=data[h].reduce((a,b)=>a+b)
-
 let percent=Math.round((total/30)*100)
-
 document.getElementById("p"+h).innerText=percent+"%"
+}
+
+updateCircle()
+}
+
+function updateCircle(){
+
+let totalDone = 0
+let totalPossible = habits.length * 30
+
+for(let h=0; h<habits.length; h++){
+totalDone += data[h].reduce((a,b)=>a+b)
+}
+
+let percent = Math.round((totalDone / totalPossible) * 100)
+
+document.getElementById("circleText").innerText = percent + "%"
+
+let circle = document.querySelector(".circle")
+
+circle.style.background = `conic-gradient(#00d4ff ${percent}%, #444 ${percent}%)`
+}
+
+function resetData(){
+
+if(confirm("Are you sure you want to reset all data?")){
+
+localStorage.removeItem("habitData")
+
+data = habits.map(()=>Array(30).fill(0))
+
+document.querySelectorAll(".box").forEach(box=>{
+box.classList.remove("done")
+})
+
+updateChart()
 
 }
 
 }
 
-// Load chart on start
 updateChart()
 
 </script>
